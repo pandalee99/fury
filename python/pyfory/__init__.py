@@ -57,4 +57,8 @@ try:
 except (AttributeError, ImportError):
     pass
 
+# Nanobind extension is available as an optional high-performance module
+# Import with: from pyfory.nanobind_ext import add, multiply, create_buffer, sum_buffer
+# Requires: pip install nanobind
+
 __version__ = "0.12.0.dev"

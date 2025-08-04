@@ -55,7 +55,8 @@ dependencies = [
 
 [project.optional-dependencies]
 format = ["pyarrow"]
-all = ["pyarrow"]
+nanobind = ["nanobind>=1.0.0"]
+all = ["pyarrow", "nanobind>=1.0.0"]
 dev = ["ruff"]
 
 [tool.setuptools]
