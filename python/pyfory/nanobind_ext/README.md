@@ -100,7 +100,13 @@ value2 = buffer.get_float(4)   # 3.14159
 A: 确保 nanobind 正确安装：`pip install nanobind`
 
 **Q: 编译失败 "nanobind/stl.h: No such file or directory"？**  
-A: include 路径问题，使用正确的命令：
+A: nanobind 2.8.0 已修复，应该正常工作了
+
+**Q: setup.py 显示 "No module named 'nanobind.setup_helpers'"？**  
+A: nanobind 2.8.0 已修复，现在使用标准 setuptools
+
+**Q: 编译仍然失败？**  
+A: 尝试手动编译：
 ```bash
 c++ -O3 -Wall -shared -std=c++17 -fPIC \
     $(python3-config --includes) \
