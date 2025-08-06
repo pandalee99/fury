@@ -13,17 +13,15 @@ try:
     
     print("✓ 找到 nanobind 版本:", nanobind.__version__)
     
-    # 最简单正确的方法 - 使用nanobind的官方API
-    # nanobind 2.8.0的正确做法是这样的
+    # 方法1：setuptools + minimal stub实现
     ext_modules = [
         Extension(
             "pyfory_nb",
-            sources=["pyfory_nb.cpp", "buffer.cpp"],
+            sources=["pyfory_nb.cpp", "buffer.cpp", "nanobind_minimal.cpp"],
             include_dirs=[nanobind.include_dir()],
             language='c++',
-            extra_compile_args=['-std=c++17', '-O3'],
-            # 关键：不要静态链接，让Python运行时处理nanobind符号
-            extra_link_args=['-Wl,--undefined,dynamic_lookup'],
+            extra_compile_args=['-std=c++17', '-O3', '-fvisibility=hidden'],
+            define_macros=[('NB_STATIC', None)],
         ),
     ]
     
