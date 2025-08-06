@@ -317,16 +317,30 @@ def test_nanobind_with_fury_buffer():
     print(f"Buffer bytes sum: {total}")
     
     # Test creating a buffer with nanobind and comparing with Fury operations
-    nb_buffer = create_buffer(8, 255)
+    # Use smaller values that fit in int8 range (-128 to 127)
+    test_value = 42
+    nb_buffer = create_buffer(8, test_value)
     fury_test_buffer = Buffer.allocate(8)
     for _ in range(8):
-        fury_test_buffer.write_int8(255)
+        fury_test_buffer.write_int8(test_value)
     
     fury_bytes = list(fury_test_buffer.get_bytes(0, fury_test_buffer.writer_index))
     
     # Both should have the same content
     assert nb_buffer == fury_bytes
     assert sum_buffer(nb_buffer) == sum_buffer(fury_bytes)
+    
+    # Additional test with raw bytes (can handle 0-255 range)
+    raw_test_data = bytes([1, 2, 3, 4, 255, 254, 253, 252])
+    fury_raw_buffer = Buffer.allocate(16)
+    fury_raw_buffer.write_bytes(raw_test_data)
+    
+    raw_bytes = list(fury_raw_buffer.get_bytes(0, len(raw_test_data)))
+    raw_sum = sum_buffer(raw_bytes)
+    expected_sum = sum(raw_test_data)
+    
+    assert raw_sum == expected_sum
+    print(f"Raw bytes test: sum={raw_sum}, expected={expected_sum}")
     
     print("Nanobind-Fury Buffer integration tests passed!")
 

@@ -69,6 +69,18 @@ product = multiply(2.5, 4.0)  # 返回 10.0
 # 缓冲区操作  
 buffer = create_buffer(10, 42)  # 创建大小为10，值为42的缓冲区
 total = sum_buffer(buffer)  # 计算缓冲区所有值的和
+
+# 与PyFory Buffer集成
+from pyfory.buffer import Buffer
+fury_buffer = Buffer.allocate(16)
+
+# 注意：write_int8的范围是-128到127
+fury_buffer.write_int8(100)  # ✓ 正确
+# fury_buffer.write_int8(255)  # ✗ 错误：超出int8范围
+
+# 对于0-255范围的数据，使用write_bytes
+raw_data = bytes([255, 254, 253])
+fury_buffer.write_bytes(raw_data)  # ✓ 正确
 ```
 
 ## 功能说明
@@ -79,6 +91,21 @@ total = sum_buffer(buffer)  # 计算缓冲区所有值的和
 - `multiply(a, b)`: 两个浮点数相乘  
 - `create_buffer(size, fill_value=0)`: 创建指定大小和填充值的缓冲区
 - `sum_buffer(buffer)`: 计算缓冲区中所有值的总和
+
+## 重要提示：数据类型范围
+
+在与PyFory Buffer集成时，请注意以下数据类型范围：
+
+| 函数 | 数据类型 | 范围 | 示例 |
+|------|----------|------|------|
+| `write_int8()` | int8_t | -128 到 127 | `buffer.write_int8(100)` ✓ |
+| `write_int8()` | int8_t | **不能是 128-255** | `buffer.write_int8(255)` ✗ |
+| `write_bytes()` | uint8_t | 0 到 255 | `buffer.write_bytes(b'\xff')` ✓ |
+
+**推荐做法**：
+- 对于有符号整数，使用对应的write_intX函数
+- 对于原始字节数据（0-255），使用`write_bytes()`
+- 在测试中使用安全的数值范围
 
 ## 自动回退机制
 

@@ -83,7 +83,7 @@ def demo_integration():
         print("Creating PyFory Buffer with test data...")
         buffer = Buffer.allocate(32)
         
-        # Write some test data
+        # Write some test data (using int8 compatible values)
         test_values = [1, 2, 3, 4, 5, 10, 20, 30]
         for val in test_values:
             buffer.write_int8(val)
@@ -100,6 +100,23 @@ def demo_integration():
         expected = sum(test_values)
         actual = sum_buffer(byte_list)
         print(f"✓ Integration test: {'PASSED' if actual == expected else 'FAILED'}")
+        
+        # Additional test with raw bytes (can handle full 0-255 range)
+        print("\nTesting with raw bytes (0-255 range)...")
+        raw_buffer = Buffer.allocate(32)
+        test_raw_data = bytes([100, 150, 200, 255, 0, 1, 2, 3])
+        raw_buffer.write_bytes(test_raw_data)
+        
+        raw_bytes = raw_buffer.get_bytes(0, len(test_raw_data))
+        raw_byte_list = list(raw_bytes)
+        
+        print(f"Raw buffer contents: {raw_byte_list}")
+        print(f"Sum using nanobind: {sum_buffer(raw_byte_list)}")
+        print(f"Expected sum: {sum(test_raw_data)}")
+        
+        raw_expected = sum(test_raw_data)
+        raw_actual = sum_buffer(raw_byte_list)
+        print(f"✓ Raw bytes test: {'PASSED' if raw_actual == raw_expected else 'FAILED'}")
         
     except ImportError as e:
         print(f"✗ PyFory Buffer not available: {e}")
