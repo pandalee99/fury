@@ -23,12 +23,21 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 # 导入测试需要的模块
 try:
-    from pyfory.nanobind_ext import Buffer as NanobindBuffer
+    # 方法1：直接导入编译好的模块（CMake方式安装）
+    import pyfory_nb
+    NanobindBuffer = pyfory_nb.Buffer
     NANOBIND_AVAILABLE = True
-    print("✓ Nanobind Buffer 可用")
-except ImportError as e:
-    print(f"✗ Nanobind Buffer 不可用: {e}")
-    NANOBIND_AVAILABLE = False
+    print("✓ Nanobind Buffer 可用（全局安装）")
+except ImportError:
+    try:
+        # 方法2：从本地模块导入（setuptools方式）
+        from pyfory.nanobind_ext import Buffer as NanobindBuffer
+        NANOBIND_AVAILABLE = True
+        print("✓ Nanobind Buffer 可用（本地模块）")
+    except ImportError as e:
+        print(f"✗ Nanobind Buffer 不可用: {e}")
+        NANOBIND_AVAILABLE = False
+        NanobindBuffer = None
 
 try:
     from pyfory._util import Buffer as CythonBuffer

@@ -42,7 +42,7 @@ cd /workspace/fury/python/pyfory/nanobind_ext
 python3 -m pip install . --no-build-isolation -v
 
 # 验证
-python3 -c "import pyfory_nb; print('✓ CMake编译成功!')"
+python3 -c "import pyfory_nb; print('CMake编译成功')"
 ```
 
 **优点：**
@@ -64,25 +64,32 @@ python3 -c "import pyfory_nb; print('✓ CMake编译成功!')"
 
 ## 测试验证
 
-编译成功后，运行测试：
+### setuptools方式验证：
 ```bash
-# 基础功能测试
-python3 test_nanobind.py
+# 编译后直接测试本地.so文件
+python3 -c "import pyfory_nb; print('✓ setuptools编译成功!')"
 
-# 性能对比测试
+# 运行测试（会自动检测本地模块）
+python3 test_nanobind.py
+```
+
+### CMake方式验证：
+```bash
+# 安装后测试全局模块
+python3 -c "import pyfory_nb; print('✓ CMake编译成功!')"
+
+# 测试Buffer功能
 python3 -c "
 import pyfory_nb
 buffer = pyfory_nb.Buffer.allocate(1024)
 buffer.write_int32(12345)
-buffer.writer_index = 0
-print('✓ 基础读写测试通过')
-
-# 测试变长整数
-buffer.write_varint32(-12345)
 buffer.reader_index = 0
-val = buffer.read_varint32()
-print(f'✓ 变长整数测试通过: {val}')
+val = buffer.read_int32()
+print(f'✓ 基础读写测试通过: {val}')
 "
+
+# 运行完整测试
+python3 test_nanobind.py
 ```
 
 ## 文件说明
@@ -107,11 +114,22 @@ A: 确保有nanobind_minimal.cpp文件，它提供必要的链接实现
 **Q: CMake编译失败？**  
 A: 确保安装了scikit-build-core：`pip install scikit-build-core[pyproject]`
 
+**Q: 编译成功但导入失败？**
+A: 
+- setuptools方式：检查当前目录是否有pyfory_nb.cpython-xxx.so文件
+- CMake方式：模块被安装到系统，直接`import pyfory_nb`即可
+
+**Q: 测试显示"Buffer object has no attribute"？**
+A: 这表明导入了fallback版本，不是编译版本。检查：
+```bash
+python3 -c "import pyfory_nb; print(dir(pyfory_nb.Buffer))"
+```
+
+**Q: CMake编译成功但tests失败？**
+A: CMake方式安装全局模块，测试代码已更新为自动检测两种方式
+
 **Q: 编译警告？**
 A: 可以忽略关于括号和符号比较的警告，不影响功能
-
-**Q: 导入失败？**
-A: 检查编译是否真正成功，查看是否生成了.so文件
 
 ## 性能特性
 
