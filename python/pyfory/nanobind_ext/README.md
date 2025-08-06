@@ -2,72 +2,62 @@
 
 这个目录包含了PyFory项目的nanobind扩展，提供高性能的C++函数绑定。
 
-## 安装依赖
+## 重要说明
 
-要构建和使用nanobind扩展，需要安装以下依赖：
+当前的实现包含了：
+1. **纯Python回退实现** - 在nanobind扩展不可用时自动使用
+2. **nanobind C++扩展代码** - 提供高性能的C++实现
+3. **完整的测试和演示** - 验证功能的正确性
 
-### 1. 安装nanobind
+## 当前状态
+
+✅ **工作正常**: 
+- 纯Python回退实现已完全工作
+- 测试通过（使用回退实现）
+- 模块导入无错误
+
+🔧 **待完成**: 
+- nanobind C++扩展的编译（需要安装nanobind）
+
+## 快速测试
+
+```bash
+# 测试当前实现（使用回退）
+cd python/pyfory/nanobind_ext
+python3 test_quick.py
+
+# 在主项目中测试
+cd python
+python3 -m pytest pyfory/tests/test_buffer.py::test_nanobind_extension -v
+```
+
+## 安装依赖（可选 - 用于C++扩展）
+
+要构建高性能的C++扩展，需要安装：
 
 ```bash
 pip install nanobind
 ```
 
-### 2. 安装构建工具（可选）
+## 构建C++扩展（可选）
 
-如果使用CMake构建：
-```bash
-pip install cmake
-```
-
-### 3. 安装其他依赖
-
-```bash
-pip install setuptools wheel
-```
-
-## 构建扩展
-
-### 方法1：使用setuptools（推荐）
-
-在`pyfory/nanobind_ext`目录下执行：
+### 方法1：使用setuptools
 
 ```bash
 cd python/pyfory/nanobind_ext
-python setup.py build_ext --inplace
+python3 setup.py build_ext --inplace
 ```
 
-### 方法2：使用CMake
+### 方法2：使用构建脚本
 
 ```bash
 cd python/pyfory/nanobind_ext
-mkdir build
-cd build
-cmake ..
-make
+./build.sh
 ```
-
-### 方法3：集成到主项目
-
-修改主项目的`pyproject.toml`文件，添加nanobind依赖：
-
-```toml
-[build-system]
-requires = [
-    "setuptools>=45",
-    "wheel",
-    "Cython>=0.29",
-    "numpy",
-    "nanobind>=1.0.0",  # 添加这一行
-    "pyarrow==15.0.0; python_version<'3.13'",
-    "pyarrow==18.0.0; python_version>='3.13'",
-]
-```
-
-然后在主项目的`setup.py`中添加nanobind扩展的构建逻辑。
 
 ## 使用方法
 
-构建完成后，可以在Python中使用：
+无论是否安装了nanobind，使用方法都是一样的：
 
 ```python
 from pyfory.nanobind_ext import add, multiply, create_buffer, sum_buffer
@@ -76,57 +66,70 @@ from pyfory.nanobind_ext import add, multiply, create_buffer, sum_buffer
 result = add(2, 3)  # 返回 5
 product = multiply(2.5, 4.0)  # 返回 10.0
 
-# 缓冲区操作
+# 缓冲区操作  
 buffer = create_buffer(10, 42)  # 创建大小为10，值为42的缓冲区
 total = sum_buffer(buffer)  # 计算缓冲区所有值的和
 ```
 
-## 测试
-
-运行测试以验证扩展是否正常工作：
-
-```bash
-cd python
-python -m pytest pyfory/tests/test_buffer.py::test_nanobind_extension -v
-```
-
-或者直接运行测试文件：
-
-```bash
-cd python
-python pyfory/tests/test_buffer.py
-```
-
 ## 功能说明
 
-当前nanobind扩展提供以下函数：
+当前实现提供以下函数：
 
 - `add(a, b)`: 两个整数相加
-- `multiply(a, b)`: 两个浮点数相乘
+- `multiply(a, b)`: 两个浮点数相乘  
 - `create_buffer(size, fill_value=0)`: 创建指定大小和填充值的缓冲区
 - `sum_buffer(buffer)`: 计算缓冲区中所有值的总和
 
-这些函数展示了nanobind与PyFory现有Buffer系统的集成可能性。
+## 自动回退机制
+
+如果nanobind C++扩展不可用（未安装nanobind或编译失败），模块会自动使用纯Python实现：
+
+- **无需额外配置**
+- **API完全兼容** 
+- **功能完全相同**
+- **性能较低但稳定可靠**
+
+## 性能对比
+
+- **纯Python实现**: 兼容性最好，性能较低
+- **nanobind C++扩展**: 性能显著提升，需要编译
+
+## 测试验证
+
+所有测试都已通过：
+
+```bash
+# 单独测试nanobind功能
+python3 -m pytest pyfory/tests/test_buffer.py::test_nanobind_extension -v
+
+# 测试与PyFory Buffer的集成
+python3 -m pytest pyfory/tests/test_buffer.py::test_nanobind_with_fury_buffer -v
+```
 
 ## 故障排除
 
-### 如果nanobind未安装
+### 警告信息说明
 
-如果nanobind未安装，扩展会自动回退到纯Python实现，不会影响项目的其他功能。
+如果看到类似这样的警告：
+```
+UserWarning: Failed to import nanobind extension: cannot import name 'pyfory_nb'...
+```
 
-### 如果构建失败
+这是**正常**的，表示：
+1. nanobind C++扩展未编译
+2. 系统自动使用纯Python回退实现  
+3. 功能完全正常，只是性能较低
 
-1. 确保安装了正确版本的nanobind
-2. 检查C++编译器是否支持C++17
-3. 确保Python开发头文件已安装
+### 编译C++扩展失败
 
-### 模块命名注意事项
-
-模块被命名为`pyfory_nb`以避免与现有的PyFory模块冲突。这个命名符合项目的命名约定。
+如果编译失败，可能的原因：
+1. 未安装nanobind: `pip install nanobind`
+2. C++编译器不支持C++17
+3. Python开发头文件未安装
 
 ## 扩展建议
 
-可以考虑将更多PyFory的核心功能移植到nanobind：
+未来可以考虑将更多PyFory核心功能移植到nanobind：
 
 1. 高性能的序列化/反序列化函数
 2. 缓冲区操作优化

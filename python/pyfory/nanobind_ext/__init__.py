@@ -20,36 +20,34 @@ PyFory nanobind extension module.
 This module provides high-performance C++ functions using nanobind.
 """
 
+# Try to import the compiled nanobind module
+_pyfory_nb = None
 try:
-    from . import pyfory_nb
-except ImportError as e:
+    # Try importing the compiled extension module directly
+    from .pyfory_nb import add as _add, multiply as _multiply, create_buffer as _create_buffer, sum_buffer as _sum_buffer
+    _pyfory_nb = True
+except ImportError:
     # Fallback to pure Python implementations if nanobind module is not available
-    import warnings
-    warnings.warn(f"Failed to import nanobind extension: {e}. Using fallback implementations.")
-    
-    class _FallbackModule:
-        @staticmethod
-        def add(a, b):
-            return a + b
-        
-        @staticmethod
-        def multiply(a, b):
-            return a * b
-        
-        @staticmethod
-        def create_buffer(size, fill_value=0):
-            return [fill_value] * size
-        
-        @staticmethod
-        def sum_buffer(buffer):
-            return sum(buffer)
-    
-    pyfory_nb = _FallbackModule()
+    _pyfory_nb = False
 
-# Export the functions
-add = pyfory_nb.add
-multiply = pyfory_nb.multiply
-create_buffer = pyfory_nb.create_buffer
-sum_buffer = pyfory_nb.sum_buffer
+if _pyfory_nb:
+    # Use the compiled nanobind functions
+    add = _add
+    multiply = _multiply
+    create_buffer = _create_buffer
+    sum_buffer = _sum_buffer
+else:
+    # Use pure Python fallback implementations
+    def add(a, b):
+        return a + b
+    
+    def multiply(a, b):
+        return a * b
+    
+    def create_buffer(size, fill_value=0):
+        return [fill_value] * size
+    
+    def sum_buffer(buffer):
+        return sum(buffer)
 
 __all__ = ['add', 'multiply', 'create_buffer', 'sum_buffer']

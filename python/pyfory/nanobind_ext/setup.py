@@ -21,38 +21,44 @@ This is a standalone setup for the nanobind module.
 """
 
 import os
+import sys
 
 # Check if nanobind is available
 try:
     import nanobind
-    from nanobind import Extension as NanobindExtension
     from nanobind.setup_helpers import build_ext
+    # Use nanobind's extension class directly
+    from nanobind import Extension as NanobindExtension
     NANOBIND_AVAILABLE = True
+    print("✓ nanobind is available")
 except ImportError:
     NANOBIND_AVAILABLE = False
-    print("Warning: nanobind not available, extension will not be built")
+    print("✗ nanobind not available, extension will not be built")
+    print("  To install nanobind: pip install nanobind")
 
 try:
     from setuptools import setup
 except ImportError:
     print("Error: setuptools not available")
-    exit(1)
+    sys.exit(1)
+
+# Define extension modules
+ext_modules = []
 
 if NANOBIND_AVAILABLE:
+    # Use nanobind to create the extension
     ext_modules = [
         NanobindExtension(
-            "pyfory.nanobind_ext.pyfory_nb",
+            "pyfory_nb",  # Module name (will be pyfory.nanobind_ext.pyfory_nb)
             ["pyfory_nb.cpp"],
             include_dirs=[
-                # Path to nanobind headers
                 nanobind.include_dir(),
             ],
             language="c++",
             cxx_std=17,
         ),
     ]
-else:
-    ext_modules = []
+    print(f"✓ Configured nanobind extension: {ext_modules[0].name}")
 
 setup(
     name="pyfory-nanobind-ext",
