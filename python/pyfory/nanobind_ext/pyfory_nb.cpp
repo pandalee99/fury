@@ -1,17 +1,5 @@
 // Licensed to the Apache Software Foundation (ASF) under one
-// or more contributor li    /**
-     * @brief Factory method to allocate a new buffer
-     * @param size Size of the buffer to allocate in bytes
-     * @return Shared pointer to newly allocated PyBuffer
-     */
-    static std::shared_ptr<PyBuffer> allocate(int32_t size) {
-        if (size <= 0) {
-            throw std::invalid_argument("Buffer size must be positive");
-        }
-        
-        auto buffer = std::make_shared<PyBuffer>();
-        buffer->buffer_data_ = std::vector<uint8_t>(size, 0);
-        buffer->buffer_ = std::make_shared<pyfory_nb::Buffer>(buffer->buffer_data_.data(), size, false);nts.  See the NOTICE file
+// or more contributor license agreements.  See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.  The ASF licenses this file
 // to you under the Apache License, Version 2.0 (the
