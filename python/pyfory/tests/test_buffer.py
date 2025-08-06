@@ -19,13 +19,6 @@ from pyfory.buffer import Buffer
 from pyfory.tests.core import require_pyarrow
 from pyfory.util import lazy_import
 
-# Import nanobind extension for testing
-try:
-    from pyfory.nanobind_ext import add, multiply, create_buffer, sum_buffer
-    NANOBIND_AVAILABLE = True
-except ImportError:
-    NANOBIND_AVAILABLE = False
-
 pa = lazy_import("pyarrow")
 
 
@@ -257,95 +250,5 @@ def test_read_bytes_as_int64():
     buf.read_bytes_as_int64(8)
 
 
-def test_nanobind_extension():
-    """Test nanobind extension module functionality."""
-    if not NANOBIND_AVAILABLE:
-        print("Nanobind extension not available, skipping tests")
-        return
-    
-    # Test basic arithmetic functions
-    assert add(2, 3) == 5
-    assert add(-1, 1) == 0
-    assert add(0, 0) == 0
-    
-    # Test floating point multiplication
-    assert multiply(2.5, 4.0) == 10.0
-    assert multiply(-1.5, 2.0) == -3.0
-    assert multiply(0.0, 100.0) == 0.0
-    
-    # Test buffer operations
-    buffer = create_buffer(10, 42)
-    assert len(buffer) == 10
-    assert all(val == 42 for val in buffer)
-    
-    # Test sum_buffer
-    assert sum_buffer(buffer) == 420  # 10 * 42
-    
-    # Test with empty buffer
-    empty_buffer = create_buffer(0)
-    assert len(empty_buffer) == 0
-    assert sum_buffer(empty_buffer) == 0
-    
-    # Test with different values
-    varied_buffer = create_buffer(5, 1)
-    assert sum_buffer(varied_buffer) == 5
-    
-    print("All nanobind extension tests passed!")
-
-
-def test_nanobind_with_fury_buffer():
-    """Test integration between nanobind extension and Fury Buffer."""
-    if not NANOBIND_AVAILABLE:
-        print("Nanobind extension not available, skipping integration tests")
-        return
-    
-    # Create a Fury buffer
-    fury_buffer = Buffer.allocate(16)
-    fury_buffer.write_int32(10)
-    fury_buffer.write_int32(20)
-    fury_buffer.write_int32(30)
-    fury_buffer.write_int32(40)
-    
-    # Get bytes from fury buffer
-    buffer_bytes = fury_buffer.get_bytes(0, fury_buffer.writer_index)
-    
-    # Convert to list for nanobind processing
-    byte_list = list(buffer_bytes)
-    
-    # Use nanobind to sum the bytes
-    total = sum_buffer(byte_list)
-    print(f"Buffer bytes sum: {total}")
-    
-    # Test creating a buffer with nanobind and comparing with Fury operations
-    # Use smaller values that fit in int8 range (-128 to 127)
-    test_value = 42
-    nb_buffer = create_buffer(8, test_value)
-    fury_test_buffer = Buffer.allocate(8)
-    for _ in range(8):
-        fury_test_buffer.write_int8(test_value)
-    
-    fury_bytes = list(fury_test_buffer.get_bytes(0, fury_test_buffer.writer_index))
-    
-    # Both should have the same content
-    assert nb_buffer == fury_bytes
-    assert sum_buffer(nb_buffer) == sum_buffer(fury_bytes)
-    
-    # Additional test with raw bytes (can handle 0-255 range)
-    raw_test_data = bytes([1, 2, 3, 4, 255, 254, 253, 252])
-    fury_raw_buffer = Buffer.allocate(16)
-    fury_raw_buffer.write_bytes(raw_test_data)
-    
-    raw_bytes = list(fury_raw_buffer.get_bytes(0, len(raw_test_data)))
-    raw_sum = sum_buffer(raw_bytes)
-    expected_sum = sum(raw_test_data)
-    
-    assert raw_sum == expected_sum
-    print(f"Raw bytes test: sum={raw_sum}, expected={expected_sum}")
-    
-    print("Nanobind-Fury Buffer integration tests passed!")
-
-
 if __name__ == "__main__":
     test_grow()
-    test_nanobind_extension()
-    test_nanobind_with_fury_buffer()
