@@ -8,11 +8,14 @@
 # 确保已安装 nanobind (你已经有了)
 python3 -c "import nanobind; print('OK:', nanobind.__version__)"
 
-# 手动编译
+# 方法1：使用 setuptools 编译（推荐）
 cd /workspace/fury/python/pyfory/nanobind_ext
+python3 setup.py build_ext --inplace
+
+# 方法2：手动编译（如果 setuptools 失败）
 c++ -O3 -Wall -shared -std=c++17 -fPIC \
     $(python3-config --includes) \
-    $(python3 -c "import nanobind; print('-I' + nanobind.include_dir())") \
+    -I$(python3 -c "import nanobind; print(nanobind.include_dir())") \
     pyfory_nb.cpp buffer.cpp \
     -o pyfory_nb$(python3-config --extension-suffix)
 ```
@@ -94,7 +97,17 @@ value2 = buffer.get_float(4)   # 3.14159
 ## 故障排除
 
 **Q: setup.py 显示找不到 nanobind？**  
-A: 检查 Python 路径或使用手动编译命令
+A: 确保 nanobind 正确安装：`pip install nanobind`
+
+**Q: 编译失败 "nanobind/stl.h: No such file or directory"？**  
+A: include 路径问题，使用正确的命令：
+```bash
+c++ -O3 -Wall -shared -std=c++17 -fPIC \
+    $(python3-config --includes) \
+    -I$(python3 -c "import nanobind; print(nanobind.include_dir())") \
+    pyfory_nb.cpp buffer.cpp \
+    -o pyfory_nb$(python3-config --extension-suffix)
+```
 
 **Q: 编译失败？**  
 A: 确保 C++ 编译器支持 C++17：`g++ --version`
