@@ -10,19 +10,29 @@ from setuptools import setup, Extension
 
 try:
     import nanobind
+    import os
+    import glob
     
     print("✓ 找到 nanobind 版本:", nanobind.__version__)
     
-    # 回到最初能工作的简单方法
+    # 获取nanobind源代码 - 这是解决链接问题的关键
+    nanobind_src_dir = os.path.join(os.path.dirname(nanobind.__file__), "src")
+    nanobind_sources = glob.glob(os.path.join(nanobind_src_dir, "*.cpp"))
+    
+    print(f"✓ 找到nanobind源文件: {len(nanobind_sources)}个")
+    
+    # 包含nanobind源代码，这样就有完整的实现了
     ext_modules = [
         Extension(
             "pyfory_nb",
-            sources=["pyfory_nb.cpp", "buffer.cpp"],
-            include_dirs=[nanobind.include_dir()],
+            sources=["pyfory_nb.cpp", "buffer.cpp"] + nanobind_sources,
+            include_dirs=[
+                nanobind.include_dir(),
+                nanobind_src_dir  # 需要访问内部头文件
+            ],
             language='c++',
-            extra_compile_args=['-std=c++17', '-O3'],
-            # 添加链接选项
-            extra_link_args=['-Wl,--allow-multiple-definition'],
+            extra_compile_args=['-std=c++17', '-O3', '-fvisibility=hidden'],
+            define_macros=[('NB_STATIC', None)],  # 静态链接nanobind
         ),
     ]
     
