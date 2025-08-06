@@ -50,9 +50,10 @@ if NANOBIND_AVAILABLE:
     ext_modules = [
         NanobindExtension(
             "pyfory_nb",  # Module name (will be pyfory.nanobind_ext.pyfory_nb)
-            ["pyfory_nb.cpp"],
+            ["pyfory_nb.cpp", "buffer.cpp"],  # Include both source files
             include_dirs=[
                 nanobind.include_dir(),
+                ".",  # Include current directory for buffer.h
             ],
             language="c++",
             cxx_std=17,
