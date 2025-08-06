@@ -13,11 +13,11 @@ try:
     
     print("✓ 找到 nanobind 版本:", nanobind.__version__)
     
-    # 回到最初能工作的简单方法，但包含nanobind stub实现
+    # 回到最初能工作的简单方法
     ext_modules = [
         Extension(
             "pyfory_nb",
-            sources=["pyfory_nb.cpp", "buffer.cpp", "nanobind_stub.cpp"],
+            sources=["pyfory_nb.cpp", "buffer.cpp"],
             include_dirs=[nanobind.include_dir()],
             language='c++',
             extra_compile_args=['-std=c++17', '-O3'],
