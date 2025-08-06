@@ -1,5 +1,17 @@
 // Licensed to the Apache Software Foundation (ASF) under one
-// or more contributor license agreements.  See the NOTICE file
+// or more contributor li    /**
+     * @brief Factory method to allocate a new buffer
+     * @param size Size of the buffer to allocate in bytes
+     * @return Shared pointer to newly allocated PyBuffer
+     */
+    static std::shared_ptr<PyBuffer> allocate(int32_t size) {
+        if (size <= 0) {
+            throw std::invalid_argument("Buffer size must be positive");
+        }
+        
+        auto buffer = std::make_shared<PyBuffer>();
+        buffer->buffer_data_ = std::vector<uint8_t>(size, 0);
+        buffer->buffer_ = std::make_shared<pyfory_nb::Buffer>(buffer->buffer_data_.data(), size, false);nts.  See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.  The ASF licenses this file
 // to you under the Apache License, Version 2.0 (the
@@ -59,9 +71,10 @@ public:
      * @param length Length of the buffer view (default: entire remaining data)
      */
     PyBuffer(nb::bytes data, int32_t offset = 0, std::optional<int32_t> length = std::nullopt) {
-        // Extract bytes data and create buffer wrapper
-        std::string data_str = data;
-        int32_t data_size = static_cast<int32_t>(data_str.size());
+        // Extract bytes data properly using nanobind API
+        nb::str data_str = nb::cast<nb::str>(data);
+        std::string cpp_str = nb::cast<std::string>(data_str);
+        int32_t data_size = static_cast<int32_t>(cpp_str.size());
         
         // Calculate actual length for the buffer view
         int32_t actual_length = length.has_value() ? length.value() : (data_size - offset);
@@ -76,7 +89,7 @@ public:
         }
         
         // Copy data and create underlying C++ buffer
-        buffer_data_ = std::vector<uint8_t>(data_str.begin() + offset, data_str.begin() + offset + actual_length);
+        buffer_data_ = std::vector<uint8_t>(cpp_str.begin() + offset, cpp_str.begin() + offset + actual_length);
         buffer_ = std::make_shared<pyfory_nb::Buffer>(buffer_data_.data(), actual_length, false);
         
         // Initialize stream positions for read/write operations
@@ -361,13 +374,14 @@ public:
     // ========== Byte Array Operations ==========
     
     void write_bytes_and_size(nb::bytes value) {
-        std::string data_str = value;
-        int32_t length = static_cast<int32_t>(data_str.size());
+        nb::str data_str = nb::cast<nb::str>(value);
+        std::string cpp_str = nb::cast<std::string>(data_str);
+        int32_t length = static_cast<int32_t>(cpp_str.size());
         write_varuint32(length);
         if (length > 0) {
             grow(length);
             buffer_->CopyFrom(writer_index, 
-                             reinterpret_cast<const uint8_t*>(data_str.data()), 
+                             reinterpret_cast<const uint8_t*>(cpp_str.data()), 
                              0, length);
             writer_index += length;
         }
@@ -404,11 +418,13 @@ public:
     int32_t reader_index;  ///< Current read position in the buffer
     int32_t writer_index;  ///< Current write position in the buffer
 
-private:
+public:
     /**
-     * @brief Private default constructor for factory methods
+     * @brief Default constructor for factory methods
      */
     PyBuffer() : reader_index(0), writer_index(0) {}
+
+private:
 
     std::shared_ptr<pyfory_nb::Buffer> buffer_;  ///< Underlying C++ buffer
     std::vector<uint8_t> buffer_data_;           ///< Managed buffer data (if owned)
